@@ -146,6 +146,8 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertIn("interact_inventory = function(x, y, item_name, count, operation, slot_name)", control_lua)
         self.assertIn("target_inventory_for", control_lua)
         self.assertIn("entity.get_fuel_inventory()", control_lua)
+        self.assertIn("entity.get_inventory(2)", control_lua)
+        self.assertIn("if removed == 0 then", control_lua)
         self.assertIn("player.build_from_cursor", control_lua)
         self.assertIn("local before_count = inventory.get_item_count(item_name)", control_lua)
         self.assertIn("target.rotate({reverse = reverse, by_player = player.index})", control_lua)

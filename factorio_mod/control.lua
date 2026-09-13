@@ -74,7 +74,7 @@ local function target_inventory_for(entity, slot_name)
     return entity.get_fuel_inventory()
   end
   if entity.type == "furnace" and slot_name == "input" then
-    return entity.get_inventory(defines.inventory.furnace_source)
+    return entity.get_inventory(2)
   end
   if entity.type == "furnace" and slot_name == "output" then
     return entity.get_output_inventory()
@@ -422,12 +422,18 @@ remote.add_interface("factorio_player_mcp", {
     local transferred
     if operation == "deposit" then
       removed = player_inventory.remove({name = item_name, count = count})
+    else
+      removed = target_inventory.remove({name = item_name, count = count})
+    end
+    if removed == 0 then
+      return response({status = "rejected", reason = "inventory_item_unavailable_or_full", tick = game.tick})
+    end
+    if operation == "deposit" then
       transferred = target_inventory.insert({name = item_name, count = removed})
       if transferred < removed then
         player_inventory.insert({name = item_name, count = removed - transferred})
       end
     else
-      removed = target_inventory.remove({name = item_name, count = count})
       transferred = player_inventory.insert({name = item_name, count = removed})
       if transferred < removed then
         target_inventory.insert({name = item_name, count = removed - transferred})
