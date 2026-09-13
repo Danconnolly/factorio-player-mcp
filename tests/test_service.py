@@ -86,6 +86,24 @@ class ActorServiceTests(unittest.TestCase):
             ],
         )
 
+    def test_mine_polls_the_same_action_until_completion(self) -> None:
+        sender = RecordingSender(
+            '{"status":"accepted","action_id":9,"requested_tick":100}',
+            '{"status":"completed","action_id":9,"requested_tick":100,"resolved_tick":180}',
+        )
+        service = ActorService(sender, sleep=lambda _: None, poll_interval_seconds=0.01)
+
+        result = service.mine(x=1.5, y=-2, count=3)
+
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(
+            sender.commands,
+            [
+                "/silent-command rcon.print(remote.call('factorio_player_mcp', 'start_mine', 1.5, -2, 3))",
+                "/silent-command rcon.print(remote.call('factorio_player_mcp', 'action_status', 9))",
+            ],
+        )
+
     def test_invalid_craft_request_does_not_reach_the_sender(self) -> None:
         sender = RecordingSender()
         service = ActorService(sender)

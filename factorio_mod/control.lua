@@ -60,13 +60,14 @@ local function action_response(action, status, reason)
   })
 end
 
-local function stop_walking(player)
+local function stop_player_actions(player)
   player.walking_state = {walking = false, direction = defines.direction.south}
+  player.mining_state = {mining = false}
 end
 
 local function finish_action(action, status, tick, reason, player)
   if player ~= nil then
-    stop_walking(player)
+    stop_player_actions(player)
   end
   action.status = status
   action.resolved_tick = tick
@@ -122,6 +123,53 @@ local function advance_move(action, event)
   player.walking_state = {walking = true, direction = move_direction(dx, dy)}
 end
 
+local function selected_mine_target(player, action)
+  player.update_selected_entity(action.target_position)
+  local target = player.selected
+  if target == nil or not target.valid or not target.minable then
+    return nil
+  end
+  if target.name ~= action.target_name or not player.can_reach_entity(target) then
+    return nil
+  end
+  return target
+end
+
+local function advance_mine(action, event)
+  local player, reason = configured_actor()
+  if player == nil then
+    finish_action(action, "failed", event.tick, reason, nil)
+    return
+  end
+
+  local progress = player.character_mining_progress
+  if action.last_mining_progress ~= nil and action.last_mining_progress > 0.1 and progress < 0.01 then
+    action.remaining_count = action.remaining_count - 1
+    if action.remaining_count <= 0 then
+      finish_action(action, "completed", event.tick, nil, player)
+      return
+    end
+  end
+
+  local target = selected_mine_target(player, action)
+  if target == nil then
+    finish_action(action, "failed", event.tick, "mine_target_unavailable", player)
+    return
+  end
+
+  player.mining_state = {mining = true, position = target.position}
+  if progress < 0.01 then
+    action.no_progress_ticks = (action.no_progress_ticks or 0) + 1
+  else
+    action.no_progress_ticks = 0
+  end
+  if action.no_progress_ticks > 120 then
+    finish_action(action, "failed", event.tick, "mining_no_progress", player)
+    return
+  end
+  action.last_mining_progress = progress
+end
+
 script.on_event(defines.events.on_tick, function(event)
   local action = storage.active_action
   if action == nil then
@@ -132,6 +180,8 @@ script.on_event(defines.events.on_tick, function(event)
     finish_action(action, "completed", event.tick)
   elseif action.action_type == "move" then
     advance_move(action, event)
+  elseif action.action_type == "mine" then
+    advance_mine(action, event)
   else
     finish_action(action, "failed", event.tick, "unknown_action_type")
   end
@@ -228,6 +278,43 @@ remote.add_interface("factorio_player_mcp", {
       action_type = "move",
       requested_tick = game.tick,
       target_position = {x = x, y = y},
+    }
+    storage.active_action = action
+    return action_response(action, "accepted")
+  end,
+
+  start_mine = function(x, y, count)
+    local player, rejection = actor_or_rejection()
+    if player == nil then
+      return rejection
+    end
+    if type(x) ~= "number" or type(y) ~= "number" or math.abs(x) > 1000000 or math.abs(y) > 1000000
+        or type(count) ~= "number" or count % 1 ~= 0 or count < 1 or count > 100 then
+      return response({status = "rejected", reason = "invalid_mine_request", tick = game.tick})
+    end
+    if storage.active_action ~= nil then
+      return response({
+        status = "rejected",
+        reason = "action_in_progress",
+        action_id = storage.active_action.id,
+        tick = game.tick,
+      })
+    end
+
+    player.update_selected_entity({x = x, y = y})
+    local target = player.selected
+    if target == nil or not target.valid or not target.minable or not player.can_reach_entity(target) then
+      return response({status = "rejected", reason = "mine_target_unavailable", tick = game.tick})
+    end
+
+    storage.next_action_id = (storage.next_action_id or 0) + 1
+    local action = {
+      id = storage.next_action_id,
+      action_type = "mine",
+      requested_tick = game.tick,
+      target_position = {x = target.position.x, y = target.position.y},
+      target_name = target.name,
+      remaining_count = count,
     }
     storage.active_action = action
     return action_response(action, "accepted")

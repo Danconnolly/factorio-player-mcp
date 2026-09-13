@@ -14,6 +14,7 @@ import re
 _RECIPE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 _MAX_WAIT_TICKS = 3_600
 _MAX_COORDINATE = 1_000_000
+_MAX_MINE_COUNT = 100
 
 
 class TypedCommandBuilder:
@@ -43,6 +44,16 @@ class TypedCommandBuilder:
 
     def start_move(self, *, x: float, y: float) -> str:
         return self._remote_call("start_move", self._coordinate("x", x), self._coordinate("y", y))
+
+    def start_mine(self, *, x: float, y: float, count: int) -> str:
+        if not isinstance(count, int) or isinstance(count, bool) or not 1 <= count <= _MAX_MINE_COUNT:
+            raise ValueError(f"count must be an integer between 1 and {_MAX_MINE_COUNT}")
+        return self._remote_call(
+            "start_mine",
+            self._coordinate("x", x),
+            self._coordinate("y", y),
+            str(count),
+        )
 
     @staticmethod
     def _coordinate(name: str, value: float) -> str:

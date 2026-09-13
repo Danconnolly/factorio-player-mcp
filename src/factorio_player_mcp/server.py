@@ -20,6 +20,8 @@ class ActorOperations(Protocol):
 
     def move(self, *, x: float, y: float) -> dict[str, object]: ...
 
+    def mine(self, *, x: float, y: float, count: int) -> dict[str, object]: ...
+
 
 def create_server(service: ActorOperations) -> FastMCP:
     """Create the public MCP server with only the currently implemented tools."""
@@ -45,6 +47,11 @@ def create_server(service: ActorOperations) -> FastMCP:
     def move(x: float, y: float) -> dict[str, object]:
         """Walk the dedicated player toward a target using normal movement state."""
         return service.move(x=x, y=y)
+
+    @mcp.tool
+    def mine(x: float, y: float, count: int = 1) -> dict[str, object]:
+        """Mine a reachable target through the dedicated player's normal mining state."""
+        return service.mine(x=x, y=y, count=count)
 
     return mcp
 

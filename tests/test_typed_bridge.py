@@ -71,6 +71,18 @@ class TypedCommandBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "y"):
             self.builder.start_move(x=0, y=float("nan"))
 
+    def test_mine_uses_a_fixed_start_method(self) -> None:
+        self.assertEqual(
+            self.builder.start_mine(x=1.5, y=-2, count=3),
+            "/silent-command rcon.print(remote.call('factorio_player_mcp', 'start_mine', 1.5, -2, 3))",
+        )
+
+    def test_mine_rejects_invalid_count(self) -> None:
+        with self.assertRaisesRegex(ValueError, "count"):
+            self.builder.start_mine(x=0, y=0, count=0)
+        with self.assertRaisesRegex(ValueError, "count"):
+            self.builder.start_mine(x=0, y=0, count=101)
+
     def test_no_generic_command_execution_is_available(self) -> None:
         self.assertFalse(hasattr(self.builder, "execute"))
         self.assertFalse(hasattr(self.builder, "run_lua"))
@@ -87,8 +99,10 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertIn("script.on_event(defines.events.on_tick", control_lua)
         self.assertIn("start_wait = function(ticks)", control_lua)
         self.assertIn("start_move = function(x, y)", control_lua)
+        self.assertIn("start_mine = function(x, y, count)", control_lua)
         self.assertIn("action_status = function(action_id)", control_lua)
         self.assertIn("player.walking_state", control_lua)
+        self.assertIn("player.mining_state", control_lua)
         self.assertNotIn("game.players[", control_lua)
         self.assertNotIn("teleport", control_lua)
         self.assertNotIn("create_entity", control_lua)
@@ -100,7 +114,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.5")
+        self.assertEqual(mod_info["version"], "0.1.6")
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
         locale = LOCALE_PATH.read_text(encoding="utf-8")

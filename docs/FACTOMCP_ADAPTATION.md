@@ -12,9 +12,10 @@ FactoMCP was reviewed at commit
 - A Python command-builder shape for a host-side MCP bridge.
 
 `factorio_mod/control.lua` deliberately exposes fixed methods for actor
-observation, native crafting, a serialized bounded wait action, and normal
-tick-driven movement. Actor-facing methods resolve the configured player name
-on every request and reject an absent, disconnected, or characterless actor.
+observation, native crafting, serialized wait/movement/mining actions, and
+normal tick-driven movement/mining state. Actor-facing methods resolve the
+configured player name on every request and reject an absent, disconnected, or
+characterless actor.
 
 ## Deliberately not imported
 
