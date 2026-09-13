@@ -162,13 +162,25 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertNotIn("create_entity", control_lua)
         self.assertNotIn("mine_entity", control_lua)
 
+    def test_wait_action_remains_pending_before_its_target_tick(self) -> None:
+        control_lua = CONTROL_LUA_PATH.read_text(encoding="utf-8")
+
+        self.assertIn(
+            '''  if action.action_type == "wait" then
+    if event.tick >= action.target_tick then
+      finish_action(action, "completed", event.tick)
+    end
+  elseif action.action_type == "move" then''',
+            control_lua,
+        )
+
     def test_mod_declares_factorio_2_1_compatibility(self) -> None:
         import json
 
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.14")
+        self.assertEqual(mod_info["version"], "0.1.15")
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
         locale = LOCALE_PATH.read_text(encoding="utf-8")

@@ -250,8 +250,10 @@ script.on_event(defines.events.on_tick, function(event)
     return
   end
 
-  if action.action_type == "wait" and event.tick >= action.target_tick then
-    finish_action(action, "completed", event.tick)
+  if action.action_type == "wait" then
+    if event.tick >= action.target_tick then
+      finish_action(action, "completed", event.tick)
+    end
   elseif action.action_type == "move" then
     advance_move(action, event)
   elseif action.action_type == "mine" then
