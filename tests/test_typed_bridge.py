@@ -132,7 +132,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertIn("rotate = function(x, y, reverse)", control_lua)
         self.assertIn("player.build_from_cursor", control_lua)
         self.assertIn("local before_count = inventory.get_item_count(item_name)", control_lua)
-        self.assertIn("target.rotate({reverse = reverse, by_player = true})", control_lua)
+        self.assertIn("target.rotate({reverse = reverse, by_player = player.index})", control_lua)
         self.assertNotIn("player.rotate_entity", control_lua)
         self.assertIn("defines.events.on_player_mined_entity", control_lua)
         self.assertIn("action.mined_count", control_lua)
@@ -152,7 +152,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.11")
+        self.assertEqual(mod_info["version"], "0.1.12")
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
         locale = LOCALE_PATH.read_text(encoding="utf-8")

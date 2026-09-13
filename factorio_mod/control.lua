@@ -388,7 +388,7 @@ remote.add_interface("factorio_player_mcp", {
     if target == nil or not target.valid or not target.rotatable or not player.can_reach_entity(target) then
       return response({status = "rejected", reason = "rotate_target_unavailable", tick = game.tick})
     end
-    if not target.rotate({reverse = reverse, by_player = true}) then
+    if not target.rotate({reverse = reverse, by_player = player.index}) then
       return response({status = "rejected", reason = "rotation_not_allowed", tick = game.tick})
     end
     return response({
