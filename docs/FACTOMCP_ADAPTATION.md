@@ -32,4 +32,4 @@ This is not an MCP server yet and is not benchmark-valid. The command builder
 is an internal-only transport component, and the mod payloads are not public
 MCP action results. Before an MCP endpoint is exposed, the bridge must add
 public schema conformance, authenticated transport, serialized action lifecycle,
-receipts, bounded observations, and disposable-Factorio integration tests.
+bounded observations, and disposable-Factorio integration tests.

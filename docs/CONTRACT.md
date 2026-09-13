@@ -64,17 +64,14 @@ Observations report deliberately bounded local state only:
 Version 1 bounds a response to 256 entities and 4,096 tiles. Evaluator state,
 scenario secrets, global maps, and unbounded caller-directed scans are excluded.
 
-## Mutation receipts and action results
+## Action results
 
 Every action response uses
 [`../contracts/action-result.v1.schema.json`](../contracts/action-result.v1.schema.json).
-Mutating actions must include an append-only receipt linked by SHA-256 to the
-previous receipt. Required receipt material is action ID/type, requested and
-resolved ticks, outcome, reason, previous receipt hash, and receipt hash.
-
-Receipts support later replay and audit; they do not confer any game privilege.
-The final canonical serialization and durable storage format will be fixed with
-the first game-side bridge implementation.
+Action results contain the action ID/type, requested and resolved ticks,
+outcome, reason, and any relevant deltas. The run log is assumed correct; the
+control contract does not require receipt hashes, hash chaining, signatures, or
+tamper-evident storage.
 
 ## Negative acceptance gates
 

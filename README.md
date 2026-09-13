@@ -28,5 +28,5 @@ The contract checks use only the Python standard library:
     python3 -m unittest discover -s tests -v
 
 These tests guard the public allow-list, forbidden capabilities, dedicated
-player identity policy, bounded observations, receipt requirements, and
+player identity policy, bounded observations, action-result fields, and
 versioned response schemas.

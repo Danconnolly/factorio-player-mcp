@@ -66,25 +66,13 @@ class CapabilityManifestTests(unittest.TestCase):
         self.assertEqual(manifest["observations"]["max_tiles_per_response"], 4096)
         self.assertNotIn("evaluator", manifest["observations"]["agent_visible_fields"])
 
-    def test_manifest_requires_receipts_for_mutating_actions(self) -> None:
+    def test_contract_does_not_require_receipt_hashes(self) -> None:
         manifest = self.load_manifest()
 
-        self.assertEqual(
-            manifest["mutation_receipt"],
-            {
-                "required_fields": [
-                    "action_id",
-                    "action_type",
-                    "requested_tick",
-                    "resolved_tick",
-                    "outcome",
-                    "reason",
-                    "previous_receipt_hash",
-                    "receipt_hash",
-                ],
-                "hash_chain": "sha256",
-            },
-        )
+        self.assertNotIn("mutation_receipt", manifest)
+
+        action_result_schema = json.loads(ACTION_RESULT_SCHEMA_PATH.read_text(encoding="utf-8"))
+        self.assertNotIn("receipt", action_result_schema["properties"])
 
     def test_public_response_schemas_are_versioned_json_schemas(self) -> None:
         for schema_path in (ACTION_RESULT_SCHEMA_PATH, OBSERVATION_SCHEMA_PATH):

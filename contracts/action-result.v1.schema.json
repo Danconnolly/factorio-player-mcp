@@ -34,15 +34,6 @@
           "count_delta": {"type": "integer"}
         }
       }
-    },
-    "receipt": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["previous_receipt_hash", "receipt_hash"],
-      "properties": {
-        "previous_receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "receipt_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
-      }
     }
   }
 }
