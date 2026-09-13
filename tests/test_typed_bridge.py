@@ -176,13 +176,17 @@ class TypedCommandBuilderTests(unittest.TestCase):
             control_lua,
         )
 
-    def test_mod_declares_factorio_2_1_compatibility(self) -> None:
+    def test_mod_declares_factorio_2_1_compatibility_and_release_version(self) -> None:
         import json
+        import tomllib
 
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
+        project = tomllib.loads((REPOSITORY_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.15")
+        self.assertEqual(mod_info["version"], "0.1.16")
+        self.assertEqual(project["project"]["version"], "0.1.16")
+        self.assertEqual(project["project"]["version"], mod_info["version"])
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
         locale = LOCALE_PATH.read_text(encoding="utf-8")
