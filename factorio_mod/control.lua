@@ -52,6 +52,20 @@ local function is_charted_for_player(player, position)
   return player.force.is_chunk_charted(player.surface, chunk_position)
 end
 
+local function direction_from_name(direction_name)
+  local directions = {
+    north = defines.direction.north,
+    northeast = defines.direction.northeast,
+    east = defines.direction.east,
+    southeast = defines.direction.southeast,
+    south = defines.direction.south,
+    southwest = defines.direction.southwest,
+    west = defines.direction.west,
+    northwest = defines.direction.northwest,
+  }
+  return directions[direction_name]
+end
+
 local function local_entities(player, radius)
   local position = player.position
   local area = {{position.x - radius, position.y - radius}, {position.x + radius, position.y + radius}}
@@ -285,6 +299,103 @@ remote.add_interface("factorio_player_mcp", {
       requested_count = count,
       queued_count = queued,
       crafting_queue_size = player.crafting_queue_size,
+    })
+  end,
+
+  place = function(item_name, x, y, direction_name)
+    local player, rejection = actor_or_rejection()
+    if player == nil then
+      return rejection
+    end
+    if type(item_name) ~= "string" or type(x) ~= "number" or type(y) ~= "number"
+        or math.abs(x) > 1000000 or math.abs(y) > 1000000 then
+      return response({status = "rejected", reason = "invalid_placement_request", tick = game.tick})
+    end
+    local direction = direction_from_name(direction_name)
+    if direction == nil then
+      return response({status = "rejected", reason = "invalid_placement_direction", tick = game.tick})
+    end
+    if storage.active_action ~= nil then
+      return response({
+        status = "rejected",
+        reason = "action_in_progress",
+        action_id = storage.active_action.id,
+        tick = game.tick,
+      })
+    end
+
+    local position = {x = x, y = y}
+    if not is_charted_for_player(player, position) then
+      return response({status = "rejected", reason = "placement_not_charted", tick = game.tick})
+    end
+    local dx = player.position.x - x
+    local dy = player.position.y - y
+    if math.sqrt(dx * dx + dy * dy) > player.build_distance then
+      return response({status = "rejected", reason = "placement_out_of_reach", tick = game.tick})
+    end
+
+    local inventory = player.get_main_inventory()
+    local slot = inventory.find_item_stack(item_name)
+    if slot == nil then
+      return response({status = "rejected", reason = "placement_item_unavailable", tick = game.tick})
+    end
+
+    player.cursor_stack.swap_stack(slot)
+    local can_build = player.can_build_from_cursor({position = position, direction = direction})
+    local placed = false
+    if can_build then
+      placed = player.build_from_cursor({position = position, direction = direction})
+    end
+    player.cursor_stack.swap_stack(slot)
+
+    if not placed then
+      return response({status = "rejected", reason = "placement_not_allowed", tick = game.tick})
+    end
+    return response({
+      status = "completed",
+      tick = game.tick,
+      item = item_name,
+      position = position,
+      direction = direction_name,
+    })
+  end,
+
+  rotate = function(x, y, reverse)
+    local player, rejection = actor_or_rejection()
+    if player == nil then
+      return rejection
+    end
+    if type(x) ~= "number" or type(y) ~= "number" or type(reverse) ~= "boolean"
+        or math.abs(x) > 1000000 or math.abs(y) > 1000000 then
+      return response({status = "rejected", reason = "invalid_rotate_request", tick = game.tick})
+    end
+    if storage.active_action ~= nil then
+      return response({
+        status = "rejected",
+        reason = "action_in_progress",
+        action_id = storage.active_action.id,
+        tick = game.tick,
+      })
+    end
+    local position = {x = x, y = y}
+    if not is_charted_for_player(player, position) then
+      return response({status = "rejected", reason = "rotate_target_not_charted", tick = game.tick})
+    end
+
+    player.update_selected_entity(position)
+    local target = player.selected
+    if target == nil or not target.valid or not target.rotatable or not player.can_reach_entity(target) then
+      return response({status = "rejected", reason = "rotate_target_unavailable", tick = game.tick})
+    end
+    if not player.rotate_entity(target, reverse) then
+      return response({status = "rejected", reason = "rotation_not_allowed", tick = game.tick})
+    end
+    return response({
+      status = "completed",
+      tick = game.tick,
+      target_name = target.name,
+      target_position = {x = target.position.x, y = target.position.y},
+      reverse = reverse,
     })
   end,
 

@@ -83,6 +83,24 @@ class TypedCommandBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "count"):
             self.builder.start_mine(x=0, y=0, count=101)
 
+    def test_place_uses_a_validated_item_and_cardinal_direction(self) -> None:
+        self.assertEqual(
+            self.builder.place(item="stone-furnace", x=3.5, y=-2, direction="east"),
+            "/silent-command rcon.print(remote.call('factorio_player_mcp', 'place', 'stone-furnace', 3.5, -2, 'east'))",
+        )
+        with self.assertRaisesRegex(ValueError, "item"):
+            self.builder.place(item="stone'); game.print('unsafe", x=0, y=0, direction="north")
+        with self.assertRaisesRegex(ValueError, "direction"):
+            self.builder.place(item="stone-furnace", x=0, y=0, direction="up")
+
+    def test_rotate_uses_a_fixed_target_and_optional_reverse(self) -> None:
+        self.assertEqual(
+            self.builder.rotate(x=3.5, y=-2, reverse=True),
+            "/silent-command rcon.print(remote.call('factorio_player_mcp', 'rotate', 3.5, -2, true))",
+        )
+        with self.assertRaisesRegex(ValueError, "reverse"):
+            self.builder.rotate(x=0, y=0, reverse=1)
+
     def test_observe_local_uses_a_bounded_radius(self) -> None:
         self.assertEqual(
             self.builder.observe_local(radius=10),
@@ -110,6 +128,10 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertIn("start_wait = function(ticks)", control_lua)
         self.assertIn("start_move = function(x, y)", control_lua)
         self.assertIn("start_mine = function(x, y, count)", control_lua)
+        self.assertIn("place = function(item_name, x, y, direction_name)", control_lua)
+        self.assertIn("rotate = function(x, y, reverse)", control_lua)
+        self.assertIn("player.build_from_cursor", control_lua)
+        self.assertIn("player.rotate_entity", control_lua)
         self.assertIn("defines.events.on_player_mined_entity", control_lua)
         self.assertIn("action.mined_count", control_lua)
         self.assertIn("local progress = player.character_mining_progress", control_lua)
@@ -128,7 +150,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.9")
+        self.assertEqual(mod_info["version"], "0.1.10")
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
         locale = LOCALE_PATH.read_text(encoding="utf-8")

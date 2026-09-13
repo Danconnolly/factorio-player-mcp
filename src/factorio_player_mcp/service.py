@@ -51,6 +51,12 @@ class ActorService:
     def mine(self, *, x: float, y: float, count: int) -> dict[str, object]:
         return self._wait_for_action(self._commands.start_mine(x=x, y=y, count=count))
 
+    def place(self, *, item: str, x: float, y: float, direction: str) -> dict[str, object]:
+        return self._invoke(self._commands.place(item=item, x=x, y=y, direction=direction))
+
+    def rotate(self, *, x: float, y: float, reverse: bool = False) -> dict[str, object]:
+        return self._invoke(self._commands.rotate(x=x, y=y, reverse=reverse))
+
     def _wait_for_action(self, start_command: str) -> dict[str, object]:
         started = self._invoke(start_command)
         if started.get("status") != "accepted":

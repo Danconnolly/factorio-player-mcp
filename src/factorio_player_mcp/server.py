@@ -24,6 +24,10 @@ class ActorOperations(Protocol):
 
     def mine(self, *, x: float, y: float, count: int) -> dict[str, object]: ...
 
+    def place(self, *, item: str, x: float, y: float, direction: str) -> dict[str, object]: ...
+
+    def rotate(self, *, x: float, y: float, reverse: bool = False) -> dict[str, object]: ...
+
 
 def create_server(service: ActorOperations) -> FastMCP:
     """Create the public MCP server with only the currently implemented tools."""
@@ -59,6 +63,16 @@ def create_server(service: ActorOperations) -> FastMCP:
     def mine(x: float, y: float, count: int = 1) -> dict[str, object]:
         """Mine a reachable target through the dedicated player's normal mining state."""
         return service.mine(x=x, y=y, count=count)
+
+    @mcp.tool
+    def place(item: str, x: float, y: float, direction: str = "north") -> dict[str, object]:
+        """Place one inventory item through the dedicated player's normal build action."""
+        return service.place(item=item, x=x, y=y, direction=direction)
+
+    @mcp.tool
+    def rotate(x: float, y: float, reverse: bool = False) -> dict[str, object]:
+        """Rotate one reachable rotatable entity through the dedicated player's normal action."""
+        return service.rotate(x=x, y=y, reverse=reverse)
 
     return mcp
 

@@ -16,6 +16,7 @@ _MAX_WAIT_TICKS = 3_600
 _MAX_COORDINATE = 1_000_000
 _MAX_MINE_COUNT = 100
 _MAX_OBSERVATION_RADIUS = 20
+_DIRECTIONS = frozenset({"north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"})
 
 
 class TypedCommandBuilder:
@@ -59,6 +60,29 @@ class TypedCommandBuilder:
             self._coordinate("x", x),
             self._coordinate("y", y),
             str(count),
+        )
+
+    def place(self, *, item: str, x: float, y: float, direction: str) -> str:
+        if not _RECIPE_NAME.fullmatch(item):
+            raise ValueError("item must be a lowercase Factorio prototype name")
+        if direction not in _DIRECTIONS:
+            raise ValueError("direction must be one of the eight Factorio directions")
+        return self._remote_call(
+            "place",
+            f"'{item}'",
+            self._coordinate("x", x),
+            self._coordinate("y", y),
+            f"'{direction}'",
+        )
+
+    def rotate(self, *, x: float, y: float, reverse: bool = False) -> str:
+        if not isinstance(reverse, bool):
+            raise ValueError("reverse must be a boolean")
+        return self._remote_call(
+            "rotate",
+            self._coordinate("x", x),
+            self._coordinate("y", y),
+            "true" if reverse else "false",
         )
 
     @staticmethod

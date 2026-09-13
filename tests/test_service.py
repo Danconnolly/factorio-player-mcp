@@ -116,6 +116,33 @@ class ActorServiceTests(unittest.TestCase):
             ],
         )
 
+    def test_place_returns_the_mod_response(self) -> None:
+        sender = RecordingSender('{"status":"completed","item":"stone-furnace"}')
+        service = ActorService(sender)
+
+        result = service.place(item="stone-furnace", x=3.5, y=-2, direction="east")
+
+        self.assertEqual(result, {"status": "completed", "item": "stone-furnace"})
+        self.assertEqual(
+            sender.commands,
+            [
+                "/silent-command rcon.print(remote.call("
+                "'factorio_player_mcp', 'place', 'stone-furnace', 3.5, -2, 'east'))"
+            ],
+        )
+
+    def test_rotate_returns_the_mod_response(self) -> None:
+        sender = RecordingSender('{"status":"completed","reverse":true}')
+        service = ActorService(sender)
+
+        result = service.rotate(x=3.5, y=-2, reverse=True)
+
+        self.assertEqual(result, {"status": "completed", "reverse": True})
+        self.assertEqual(
+            sender.commands,
+            ["/silent-command rcon.print(remote.call('factorio_player_mcp', 'rotate', 3.5, -2, true))"],
+        )
+
     def test_invalid_craft_request_does_not_reach_the_sender(self) -> None:
         sender = RecordingSender()
         service = ActorService(sender)
