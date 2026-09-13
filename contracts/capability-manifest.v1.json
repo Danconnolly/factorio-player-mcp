@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract_version": "1.0.0",
+  "actor": {
+    "selection": "configured_dedicated_player_name",
+    "must_be_connected": true,
+    "must_have_character": true,
+    "allow_index_fallback": false,
+    "allow_caller_selected_player": false
+  },
+  "allowed_actions": [
+    "craft",
+    "interact_inventory",
+    "mine",
+    "move",
+    "place",
+    "rotate",
+    "wait"
+  ],
+  "prohibited_capabilities": [
+    "arbitrary_lua",
+    "direct_entity_creation",
+    "direct_entity_destruction",
+    "direct_mining",
+    "evaluator_access",
+    "forced_research",
+    "full_map_state_dump",
+    "generic_rcon_command_execution",
+    "item_spawning",
+    "player_selection",
+    "teleportation"
+  ],
+  "observations": {
+    "world_scope": "charted_local_area",
+    "max_entities_per_response": 256,
+    "max_tiles_per_response": 4096,
+    "agent_visible_fields": [
+      "action_warnings",
+      "character_state",
+      "inventory",
+      "local_entities",
+      "local_tiles",
+      "player_position",
+      "tick"
+    ]
+  },
+  "mutation_receipt": {
+    "required_fields": [
+      "action_id",
+      "action_type",
+      "requested_tick",
+      "resolved_tick",
+      "outcome",
+      "reason",
+      "previous_receipt_hash",
+      "receipt_hash"
+    ],
+    "hash_chain": "sha256"
+  }
+}

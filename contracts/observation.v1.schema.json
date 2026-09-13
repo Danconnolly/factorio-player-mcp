@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://factorio-player-mcp.dev/contracts/observation.v1.schema.json",
+  "title": "Factorio Player MCP Observation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "tick", "player_position", "character_state", "inventory"],
+  "properties": {
+    "contract_version": {"const": "1.0.0"},
+    "tick": {"type": "integer", "minimum": 0},
+    "player_position": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {"x": {"type": "number"}, "y": {"type": "number"}}
+    },
+    "character_state": {"type": "string"},
+    "inventory": {"type": "array", "maxItems": 256},
+    "local_entities": {"type": "array", "maxItems": 256},
+    "local_tiles": {"type": "array", "maxItems": 4096},
+    "action_warnings": {"type": "array", "maxItems": 64, "items": {"type": "string"}}
+  }
+}
