@@ -1,0 +1,61 @@
+"""Tests for the narrowed FactoMCP-derived typed bridge."""
+
+from __future__ import annotations
+
+import unittest
+from pathlib import Path
+
+from factorio_player_mcp.bridge import TypedCommandBuilder
+
+
+REPOSITORY_ROOT = Path(__file__).parents[1]
+CONTROL_LUA_PATH = REPOSITORY_ROOT / "factorio_mod" / "control.lua"
+
+
+class TypedCommandBuilderTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.builder = TypedCommandBuilder()
+
+    def test_observe_command_calls_only_the_fixed_mod_interface(self) -> None:
+        command = self.builder.observe_actor()
+
+        self.assertEqual(
+            command,
+            "/silent-command rcon.print(remote.call('factorio_player_mcp', 'observe_actor'))",
+        )
+        self.assertNotIn("game.players[", command)
+
+    def test_craft_command_uses_a_validated_recipe_and_count(self) -> None:
+        command = self.builder.craft(recipe="iron-gear-wheel", count=2)
+
+        self.assertEqual(
+            command,
+            "/silent-command rcon.print(remote.call('factorio_player_mcp', 'craft', 'iron-gear-wheel', 2))",
+        )
+
+    def test_craft_command_rejects_lua_injection_in_recipe_name(self) -> None:
+        with self.assertRaisesRegex(ValueError, "recipe"):
+            self.builder.craft(recipe="iron'); game.print('unsafe", count=1)
+
+    def test_craft_command_rejects_non_positive_count(self) -> None:
+        with self.assertRaisesRegex(ValueError, "count"):
+            self.builder.craft(recipe="iron-gear-wheel", count=0)
+
+    def test_no_generic_command_execution_is_available(self) -> None:
+        self.assertFalse(hasattr(self.builder, "execute"))
+        self.assertFalse(hasattr(self.builder, "run_lua"))
+
+    def test_game_mod_exposes_only_fixed_actor_operations(self) -> None:
+        control_lua = CONTROL_LUA_PATH.read_text(encoding="utf-8")
+
+        self.assertIn('remote.add_interface("factorio_player_mcp"', control_lua)
+        self.assertIn("configured_dedicated_player_name", control_lua)
+        self.assertIn("player.begin_crafting", control_lua)
+        self.assertNotIn("game.players[", control_lua)
+        self.assertNotIn("teleport", control_lua)
+        self.assertNotIn("create_entity", control_lua)
+        self.assertNotIn("mine_entity", control_lua)
+
+
+if __name__ == "__main__":
+    unittest.main()
