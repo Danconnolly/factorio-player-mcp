@@ -86,6 +86,7 @@ local function action_response(action, status, reason)
     resolved_tick = action.resolved_tick,
     target_tick = action.target_tick,
     target_position = action.target_position,
+    mined_count = action.mined_count,
     reason = reason or action.reason,
   })
 end
@@ -172,15 +173,6 @@ local function advance_mine(action, event)
     return
   end
 
-  local progress = player.character_mining_progress
-  if action.last_mining_progress ~= nil and action.last_mining_progress > 0.1 and progress < 0.01 then
-    action.remaining_count = action.remaining_count - 1
-    if action.remaining_count <= 0 then
-      finish_action(action, "completed", event.tick, nil, player)
-      return
-    end
-  end
-
   local target = selected_mine_target(player, action)
   if target == nil then
     finish_action(action, "failed", event.tick, "mine_target_unavailable", player)
@@ -199,6 +191,27 @@ local function advance_mine(action, event)
   end
   action.last_mining_progress = progress
 end
+
+script.on_event(defines.events.on_player_mined_entity, function(event)
+  local action = storage.active_action
+  if action == nil or action.action_type ~= "mine" then
+    return
+  end
+
+  local player, reason = configured_actor()
+  if player == nil then
+    finish_action(action, "failed", event.tick, reason, nil)
+    return
+  end
+  if event.player_index ~= player.index or event.entity.name ~= action.target_name then
+    return
+  end
+
+  action.mined_count = action.mined_count + 1
+  if action.mined_count >= action.requested_count then
+    finish_action(action, "completed", event.tick, nil, player)
+  end
+end)
 
 script.on_event(defines.events.on_tick, function(event)
   local action = storage.active_action
@@ -361,7 +374,8 @@ remote.add_interface("factorio_player_mcp", {
       requested_tick = game.tick,
       target_position = {x = target.position.x, y = target.position.y},
       target_name = target.name,
-      remaining_count = count,
+      requested_count = count,
+      mined_count = 0,
     }
     storage.active_action = action
     return action_response(action, "accepted")
