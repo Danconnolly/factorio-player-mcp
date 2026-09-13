@@ -11,10 +11,10 @@ FactoMCP was reviewed at commit
 - The ordinary player position and main-inventory observation primitives.
 - A Python command-builder shape for a host-side MCP bridge.
 
-`factorio_mod/control.lua` deliberately exposes only two fixed methods during
-this bootstrap: `observe_actor` and `craft`. Both resolve the configured player
-name on every request and reject an absent, disconnected, or characterless
-actor.
+`factorio_mod/control.lua` deliberately exposes fixed methods for actor
+observation, native crafting, and a serialized bounded wait action. Actor-facing
+methods resolve the configured player name on every request and reject an
+absent, disconnected, or characterless actor.
 
 ## Deliberately not imported
 
@@ -28,8 +28,8 @@ actor.
 
 ## Important limitation
 
-This is not an MCP server yet and is not benchmark-valid. The command builder
-is an internal-only transport component, and the mod payloads are not public
-MCP action results. Before an MCP endpoint is exposed, the bridge must add
-public schema conformance, authenticated transport, serialized action lifecycle,
-bounded observations, and disposable-Factorio integration tests.
+This is an MCP bootstrap, not a benchmark-valid controller. The command builder
+is an internal-only transport component, and the mod payloads are not yet public
+MCP action results. Before benchmark use, the bridge still needs public schema
+conformance, authenticated transport, cancellation semantics, richer bounded
+observations, and disposable-Factorio integration tests.

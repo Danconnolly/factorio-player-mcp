@@ -43,6 +43,22 @@ class TypedCommandBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "count"):
             self.builder.craft(recipe="iron-gear-wheel", count=0)
 
+    def test_wait_uses_fixed_start_and_status_methods(self) -> None:
+        self.assertEqual(
+            self.builder.start_wait(ticks=120),
+            "/silent-command rcon.print(remote.call('factorio_player_mcp', 'start_wait', 120))",
+        )
+        self.assertEqual(
+            self.builder.action_status(action_id=7),
+            "/silent-command rcon.print(remote.call('factorio_player_mcp', 'action_status', 7))",
+        )
+
+    def test_wait_rejects_unbounded_or_non_positive_ticks(self) -> None:
+        with self.assertRaisesRegex(ValueError, "ticks"):
+            self.builder.start_wait(ticks=0)
+        with self.assertRaisesRegex(ValueError, "ticks"):
+            self.builder.start_wait(ticks=3601)
+
     def test_no_generic_command_execution_is_available(self) -> None:
         self.assertFalse(hasattr(self.builder, "execute"))
         self.assertFalse(hasattr(self.builder, "run_lua"))
@@ -55,6 +71,10 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertIn("player.begin_crafting", control_lua)
         self.assertIn("for _, item in pairs(contents) do", control_lua)
         self.assertIn("name = item.name, count = item.count", control_lua)
+        self.assertIn("storage.active_action", control_lua)
+        self.assertIn("script.on_event(defines.events.on_tick", control_lua)
+        self.assertIn("start_wait = function(ticks)", control_lua)
+        self.assertIn("action_status = function(action_id)", control_lua)
         self.assertNotIn("game.players[", control_lua)
         self.assertNotIn("teleport", control_lua)
         self.assertNotIn("create_entity", control_lua)
@@ -66,7 +86,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.3")
+        self.assertEqual(mod_info["version"], "0.1.4")
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
         locale = LOCALE_PATH.read_text(encoding="utf-8")

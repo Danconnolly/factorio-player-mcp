@@ -47,6 +47,31 @@ local function inventory_contents(player)
   return items
 end
 
+local function action_response(action, status, reason)
+  return response({
+    status = status,
+    action_id = action.id,
+    action_type = action.action_type,
+    requested_tick = action.requested_tick,
+    resolved_tick = action.resolved_tick,
+    target_tick = action.target_tick,
+    reason = reason,
+  })
+end
+
+script.on_event(defines.events.on_tick, function(event)
+  local action = storage.active_action
+  if action == nil then
+    return
+  end
+
+  if event.tick >= action.target_tick then
+    action.resolved_tick = event.tick
+    storage.last_completed_action = action
+    storage.active_action = nil
+  end
+end)
+
 remote.add_interface("factorio_player_mcp", {
   observe_actor = function()
     local player, rejection = actor_or_rejection()
@@ -85,5 +110,47 @@ remote.add_interface("factorio_player_mcp", {
       queued_count = queued,
       crafting_queue_size = player.crafting_queue_size,
     })
+  end,
+
+  start_wait = function(ticks)
+    local player, rejection = actor_or_rejection()
+    if player == nil then
+      return rejection
+    end
+    if type(ticks) ~= "number" or ticks % 1 ~= 0 or ticks < 1 or ticks > 3600 then
+      return response({status = "rejected", reason = "invalid_wait_ticks", tick = game.tick})
+    end
+    if storage.active_action ~= nil then
+      return response({
+        status = "rejected",
+        reason = "action_in_progress",
+        action_id = storage.active_action.id,
+        tick = game.tick,
+      })
+    end
+
+    storage.next_action_id = (storage.next_action_id or 0) + 1
+    local action = {
+      id = storage.next_action_id,
+      action_type = "wait",
+      requested_tick = game.tick,
+      target_tick = game.tick + ticks,
+    }
+    storage.active_action = action
+    return action_response(action, "accepted")
+  end,
+
+  action_status = function(action_id)
+    if type(action_id) ~= "number" or action_id % 1 ~= 0 or action_id < 1 then
+      return response({status = "rejected", reason = "invalid_action_id", tick = game.tick})
+    end
+
+    if storage.active_action ~= nil and storage.active_action.id == action_id then
+      return action_response(storage.active_action, "accepted")
+    end
+    if storage.last_completed_action ~= nil and storage.last_completed_action.id == action_id then
+      return action_response(storage.last_completed_action, "completed")
+    end
+    return response({status = "rejected", reason = "unknown_action", action_id = action_id, tick = game.tick})
   end,
 })

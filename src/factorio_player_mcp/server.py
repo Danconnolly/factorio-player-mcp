@@ -16,6 +16,8 @@ class ActorOperations(Protocol):
 
     def craft(self, *, recipe: str, count: int) -> dict[str, object]: ...
 
+    def wait(self, *, ticks: int) -> dict[str, object]: ...
+
 
 def create_server(service: ActorOperations) -> FastMCP:
     """Create the public MCP server with only the currently implemented tools."""
@@ -31,6 +33,11 @@ def create_server(service: ActorOperations) -> FastMCP:
     def craft(recipe: str, count: int = 1) -> dict[str, object]:
         """Queue an available recipe through the dedicated player's native craft queue."""
         return service.craft(recipe=recipe, count=count)
+
+    @mcp.tool
+    def wait(ticks: int) -> dict[str, object]:
+        """Wait for a bounded number of normal Factorio game ticks."""
+        return service.wait(ticks=ticks)
 
     return mcp
 

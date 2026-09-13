@@ -11,6 +11,7 @@ import re
 
 
 _RECIPE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+_MAX_WAIT_TICKS = 3_600
 
 
 class TypedCommandBuilder:
@@ -27,6 +28,16 @@ class TypedCommandBuilder:
         if not isinstance(count, int) or isinstance(count, bool) or count <= 0:
             raise ValueError("count must be a positive integer")
         return self._remote_call("craft", f"'{recipe}'", str(count))
+
+    def start_wait(self, *, ticks: int) -> str:
+        if not isinstance(ticks, int) or isinstance(ticks, bool) or not 1 <= ticks <= _MAX_WAIT_TICKS:
+            raise ValueError(f"ticks must be an integer between 1 and {_MAX_WAIT_TICKS}")
+        return self._remote_call("start_wait", str(ticks))
+
+    def action_status(self, *, action_id: int) -> str:
+        if not isinstance(action_id, int) or isinstance(action_id, bool) or action_id <= 0:
+            raise ValueError("action_id must be a positive integer")
+        return self._remote_call("action_status", str(action_id))
 
     def _remote_call(self, method: str, *arguments: str) -> str:
         arguments_text = ", ".join(
