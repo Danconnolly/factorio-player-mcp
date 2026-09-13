@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "factorio-player-mcp"
-version = "0.1.13"
+version = "0.1.14"
 description = "Constrained MCP control layer for one dedicated Factorio player"
 readme = "README.md"
 requires-python = ">=3.12"

@@ -145,6 +145,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertIn("rotate = function(x, y, reverse)", control_lua)
         self.assertIn("interact_inventory = function(x, y, item_name, count, operation, slot_name)", control_lua)
         self.assertIn("target_inventory_for", control_lua)
+        self.assertIn("entity.get_fuel_inventory()", control_lua)
         self.assertIn("player.build_from_cursor", control_lua)
         self.assertIn("local before_count = inventory.get_item_count(item_name)", control_lua)
         self.assertIn("target.rotate({reverse = reverse, by_player = player.index})", control_lua)
@@ -167,7 +168,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.13")
+        self.assertEqual(mod_info["version"], "0.1.14")
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
         locale = LOCALE_PATH.read_text(encoding="utf-8")

@@ -70,17 +70,14 @@ local function target_inventory_for(entity, slot_name)
   if (entity.type == "container" or entity.type == "logistic-container") and slot_name == "container" then
     return entity.get_inventory(defines.inventory.chest)
   end
-  if entity.type == "furnace" then
-    local furnace_slots = {
-      input = defines.inventory.furnace_source,
-      fuel = defines.inventory.furnace_fuel,
-      output = defines.inventory.furnace_result,
-    }
-    local inventory_index = furnace_slots[slot_name]
-    return inventory_index == nil and nil or entity.get_inventory(inventory_index)
+  if (entity.type == "furnace" or entity.type == "mining-drill") and slot_name == "fuel" then
+    return entity.get_fuel_inventory()
   end
-  if entity.type == "mining-drill" and slot_name == "fuel" then
-    return entity.get_inventory(defines.inventory.fuel)
+  if entity.type == "furnace" and slot_name == "input" then
+    return entity.get_inventory(defines.inventory.furnace_source)
+  end
+  if entity.type == "furnace" and slot_name == "output" then
+    return entity.get_output_inventory()
   end
   return nil
 end
