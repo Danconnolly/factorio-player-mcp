@@ -47,6 +47,36 @@ local function inventory_contents(player)
   return items
 end
 
+local function is_charted_for_player(player, position)
+  local chunk_position = {x = math.floor(position.x / 32), y = math.floor(position.y / 32)}
+  return player.force.is_chunk_charted(player.surface, chunk_position)
+end
+
+local function local_entities(player, radius)
+  local position = player.position
+  local area = {{position.x - radius, position.y - radius}, {position.x + radius, position.y + radius}}
+  local entities = player.surface.find_entities_filtered({area = area})
+  local result = {}
+  for _, entity in ipairs(entities) do
+    if #result >= 256 then
+      break
+    end
+    if entity.valid and entity.type ~= "character" and is_charted_for_player(player, entity.position) then
+      table.insert(result, {
+        name = entity.name,
+        type = entity.type,
+        position = {x = entity.position.x, y = entity.position.y},
+      })
+    end
+  end
+  table.sort(result, function(left, right)
+    if left.name ~= right.name then return left.name < right.name end
+    if left.position.x ~= right.position.x then return left.position.x < right.position.x end
+    return left.position.y < right.position.y
+  end)
+  return result
+end
+
 local function action_response(action, status, reason)
   return response({
     status = status or action.status,
@@ -199,6 +229,23 @@ remote.add_interface("factorio_player_mcp", {
       tick = game.tick,
       player_position = {x = player.position.x, y = player.position.y},
       inventory = inventory_contents(player),
+    })
+  end,
+
+  observe_local = function(radius)
+    local player, rejection = actor_or_rejection()
+    if player == nil then
+      return rejection
+    end
+    if type(radius) ~= "number" or radius % 1 ~= 0 or radius < 1 or radius > 20 then
+      return response({status = "rejected", reason = "invalid_observation_radius", tick = game.tick})
+    end
+    return response({
+      status = "completed",
+      tick = game.tick,
+      player_position = {x = player.position.x, y = player.position.y},
+      radius = radius,
+      local_entities = local_entities(player, radius),
     })
   end,
 

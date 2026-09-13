@@ -15,6 +15,7 @@ _RECIPE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 _MAX_WAIT_TICKS = 3_600
 _MAX_COORDINATE = 1_000_000
 _MAX_MINE_COUNT = 100
+_MAX_OBSERVATION_RADIUS = 20
 
 
 class TypedCommandBuilder:
@@ -24,6 +25,11 @@ class TypedCommandBuilder:
 
     def observe_actor(self) -> str:
         return self._remote_call("observe_actor")
+
+    def observe_local(self, *, radius: int) -> str:
+        if not isinstance(radius, int) or isinstance(radius, bool) or not 1 <= radius <= _MAX_OBSERVATION_RADIUS:
+            raise ValueError(f"radius must be an integer between 1 and {_MAX_OBSERVATION_RADIUS}")
+        return self._remote_call("observe_local", str(radius))
 
     def craft(self, *, recipe: str, count: int) -> str:
         if not _RECIPE_NAME.fullmatch(recipe):

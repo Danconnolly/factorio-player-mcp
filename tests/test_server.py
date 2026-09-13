@@ -12,6 +12,9 @@ class FakeActorService:
     def observe_actor(self) -> dict[str, object]:
         return {"status": "completed"}
 
+    def observe_local(self, *, radius: int) -> dict[str, object]:
+        return {"status": "completed", "radius": radius}
+
     def craft(self, *, recipe: str, count: int) -> dict[str, object]:
         return {"status": "completed", "recipe": recipe, "count": count}
 
@@ -32,7 +35,7 @@ class McpServerTests(unittest.TestCase):
         tools = asyncio.run(server.get_tools())
 
         self.assertEqual(server.name, "Factorio Player MCP")
-        self.assertEqual(set(tools), {"observe_actor", "craft", "wait", "move", "mine"})
+        self.assertEqual(set(tools), {"observe_actor", "observe_local", "craft", "wait", "move", "mine"})
         self.assertNotIn("run_lua", tools)
         self.assertNotIn("execute", tools)
 

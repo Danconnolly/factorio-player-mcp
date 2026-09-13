@@ -30,6 +30,18 @@ class ActorServiceTests(unittest.TestCase):
             ["/silent-command rcon.print(remote.call('factorio_player_mcp', 'observe_actor'))"],
         )
 
+    def test_observe_local_returns_the_bounded_mod_response(self) -> None:
+        sender = RecordingSender('{"status":"completed","local_entities":[]}')
+        service = ActorService(sender)
+
+        result = service.observe_local(radius=10)
+
+        self.assertEqual(result, {"status": "completed", "local_entities": []})
+        self.assertEqual(
+            sender.commands,
+            ["/silent-command rcon.print(remote.call('factorio_player_mcp', 'observe_local', 10))"],
+        )
+
     def test_craft_returns_the_mod_response(self) -> None:
         sender = RecordingSender('{"status":"completed","queued_count":1}')
         service = ActorService(sender)

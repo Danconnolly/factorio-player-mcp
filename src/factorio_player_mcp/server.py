@@ -14,6 +14,8 @@ from factorio_player_mcp.service import ActorService
 class ActorOperations(Protocol):
     def observe_actor(self) -> dict[str, object]: ...
 
+    def observe_local(self, *, radius: int) -> dict[str, object]: ...
+
     def craft(self, *, recipe: str, count: int) -> dict[str, object]: ...
 
     def wait(self, *, ticks: int) -> dict[str, object]: ...
@@ -32,6 +34,11 @@ def create_server(service: ActorOperations) -> FastMCP:
     def observe_actor() -> dict[str, object]:
         """Return bounded state for the configured dedicated player."""
         return service.observe_actor()
+
+    @mcp.tool
+    def observe_local(radius: int = 10) -> dict[str, object]:
+        """Return chart-bounded entities within a small radius of the dedicated player."""
+        return service.observe_local(radius=radius)
 
     @mcp.tool
     def craft(recipe: str, count: int = 1) -> dict[str, object]:

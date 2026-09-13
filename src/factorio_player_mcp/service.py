@@ -36,6 +36,9 @@ class ActorService:
     def observe_actor(self) -> dict[str, object]:
         return self._invoke(self._commands.observe_actor())
 
+    def observe_local(self, *, radius: int) -> dict[str, object]:
+        return self._invoke(self._commands.observe_local(radius=radius))
+
     def craft(self, *, recipe: str, count: int) -> dict[str, object]:
         return self._invoke(self._commands.craft(recipe=recipe, count=count))
 
