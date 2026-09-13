@@ -40,8 +40,8 @@ local function inventory_contents(player)
   local inventory = player.get_main_inventory()
   local contents = inventory.get_contents()
   local items = {}
-  for name, count in pairs(contents) do
-    table.insert(items, {name = name, count = count})
+  for _, item in pairs(contents) do
+    table.insert(items, {name = item.name, count = item.count, quality = item.quality})
   end
   table.sort(items, function(left, right) return left.name < right.name end)
   return items

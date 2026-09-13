@@ -53,6 +53,8 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertIn('remote.add_interface("factorio_player_mcp"', control_lua)
         self.assertIn("configured_dedicated_player_name", control_lua)
         self.assertIn("player.begin_crafting", control_lua)
+        self.assertIn("for _, item in pairs(contents) do", control_lua)
+        self.assertIn("name = item.name, count = item.count", control_lua)
         self.assertNotIn("game.players[", control_lua)
         self.assertNotIn("teleport", control_lua)
         self.assertNotIn("create_entity", control_lua)
@@ -64,7 +66,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.2")
+        self.assertEqual(mod_info["version"], "0.1.3")
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
         locale = LOCALE_PATH.read_text(encoding="utf-8")
