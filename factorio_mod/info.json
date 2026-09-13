@@ -1,8 +1,8 @@
 {
   "name": "factorio-player-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "title": "Factorio Player MCP",
   "author": "Daniel Connolly",
-  "factorio_version": "2.0",
+  "factorio_version": "2.1",
   "description": "Narrow typed control interface for one dedicated Factorio player."
 }

@@ -10,6 +10,7 @@ from factorio_player_mcp.bridge import TypedCommandBuilder
 
 REPOSITORY_ROOT = Path(__file__).parents[1]
 CONTROL_LUA_PATH = REPOSITORY_ROOT / "factorio_mod" / "control.lua"
+MOD_INFO_PATH = REPOSITORY_ROOT / "factorio_mod" / "info.json"
 
 
 class TypedCommandBuilderTests(unittest.TestCase):
@@ -55,6 +56,14 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertNotIn("teleport", control_lua)
         self.assertNotIn("create_entity", control_lua)
         self.assertNotIn("mine_entity", control_lua)
+
+    def test_mod_declares_factorio_2_1_compatibility(self) -> None:
+        import json
+
+        mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
+
+        self.assertEqual(mod_info["factorio_version"], "2.1")
+        self.assertEqual(mod_info["version"], "0.1.1")
 
 
 if __name__ == "__main__":
