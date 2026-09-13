@@ -59,6 +59,18 @@ class TypedCommandBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "ticks"):
             self.builder.start_wait(ticks=3601)
 
+    def test_move_uses_fixed_start_and_status_methods(self) -> None:
+        self.assertEqual(
+            self.builder.start_move(x=-3.5, y=26),
+            "/silent-command rcon.print(remote.call('factorio_player_mcp', 'start_move', -3.5, 26))",
+        )
+
+    def test_move_rejects_non_finite_coordinates(self) -> None:
+        with self.assertRaisesRegex(ValueError, "x"):
+            self.builder.start_move(x=float("inf"), y=0)
+        with self.assertRaisesRegex(ValueError, "y"):
+            self.builder.start_move(x=0, y=float("nan"))
+
     def test_no_generic_command_execution_is_available(self) -> None:
         self.assertFalse(hasattr(self.builder, "execute"))
         self.assertFalse(hasattr(self.builder, "run_lua"))
@@ -74,7 +86,9 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertIn("storage.active_action", control_lua)
         self.assertIn("script.on_event(defines.events.on_tick", control_lua)
         self.assertIn("start_wait = function(ticks)", control_lua)
+        self.assertIn("start_move = function(x, y)", control_lua)
         self.assertIn("action_status = function(action_id)", control_lua)
+        self.assertIn("player.walking_state", control_lua)
         self.assertNotIn("game.players[", control_lua)
         self.assertNotIn("teleport", control_lua)
         self.assertNotIn("create_entity", control_lua)
@@ -86,7 +100,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.4")
+        self.assertEqual(mod_info["version"], "0.1.5")
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
         locale = LOCALE_PATH.read_text(encoding="utf-8")

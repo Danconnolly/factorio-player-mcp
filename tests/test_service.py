@@ -68,6 +68,24 @@ class ActorServiceTests(unittest.TestCase):
         )
         self.assertEqual(sleeps, [0.01])
 
+    def test_move_polls_the_same_action_until_completion(self) -> None:
+        sender = RecordingSender(
+            '{"status":"accepted","action_id":8,"requested_tick":20}',
+            '{"status":"completed","action_id":8,"requested_tick":20,"resolved_tick":80}',
+        )
+        service = ActorService(sender, sleep=lambda _: None, poll_interval_seconds=0.01)
+
+        result = service.move(x=-3.5, y=26)
+
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(
+            sender.commands,
+            [
+                "/silent-command rcon.print(remote.call('factorio_player_mcp', 'start_move', -3.5, 26))",
+                "/silent-command rcon.print(remote.call('factorio_player_mcp', 'action_status', 8))",
+            ],
+        )
+
     def test_invalid_craft_request_does_not_reach_the_sender(self) -> None:
         sender = RecordingSender()
         service = ActorService(sender)

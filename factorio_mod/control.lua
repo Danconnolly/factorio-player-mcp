@@ -49,14 +49,77 @@ end
 
 local function action_response(action, status, reason)
   return response({
-    status = status,
+    status = status or action.status,
     action_id = action.id,
     action_type = action.action_type,
     requested_tick = action.requested_tick,
     resolved_tick = action.resolved_tick,
     target_tick = action.target_tick,
-    reason = reason,
+    target_position = action.target_position,
+    reason = reason or action.reason,
   })
+end
+
+local function stop_walking(player)
+  player.walking_state = {walking = false, direction = defines.direction.south}
+end
+
+local function finish_action(action, status, tick, reason, player)
+  if player ~= nil then
+    stop_walking(player)
+  end
+  action.status = status
+  action.resolved_tick = tick
+  action.reason = reason
+  storage.last_finished_action = action
+  storage.active_action = nil
+end
+
+local function move_direction(dx, dy)
+  local index = math.floor(((math.deg(math.atan2(dy, dx)) + 360) % 360 + 22.5) / 45) % 8
+  local directions = {
+    [0] = defines.direction.east,
+    [1] = defines.direction.southeast,
+    [2] = defines.direction.south,
+    [3] = defines.direction.southwest,
+    [4] = defines.direction.west,
+    [5] = defines.direction.northwest,
+    [6] = defines.direction.north,
+    [7] = defines.direction.northeast,
+  }
+  return directions[index]
+end
+
+local function advance_move(action, event)
+  local player, reason = configured_actor()
+  if player == nil then
+    finish_action(action, "failed", event.tick, reason, nil)
+    return
+  end
+
+  local dx = action.target_position.x - player.position.x
+  local dy = action.target_position.y - player.position.y
+  local distance = math.sqrt(dx * dx + dy * dy)
+  if distance <= 0.75 then
+    finish_action(action, "completed", event.tick, nil, player)
+    return
+  end
+
+  if action.last_progress_tick == nil or event.tick - action.last_progress_tick >= 60 then
+    if action.last_distance ~= nil and distance >= action.last_distance - 0.1 then
+      action.stalled_checks = (action.stalled_checks or 0) + 1
+    else
+      action.stalled_checks = 0
+    end
+    action.last_distance = distance
+    action.last_progress_tick = event.tick
+  end
+  if action.stalled_checks >= 3 then
+    finish_action(action, "failed", event.tick, "movement_stalled", player)
+    return
+  end
+
+  player.walking_state = {walking = true, direction = move_direction(dx, dy)}
 end
 
 script.on_event(defines.events.on_tick, function(event)
@@ -65,10 +128,12 @@ script.on_event(defines.events.on_tick, function(event)
     return
   end
 
-  if event.tick >= action.target_tick then
-    action.resolved_tick = event.tick
-    storage.last_completed_action = action
-    storage.active_action = nil
+  if action.action_type == "wait" and event.tick >= action.target_tick then
+    finish_action(action, "completed", event.tick)
+  elseif action.action_type == "move" then
+    advance_move(action, event)
+  else
+    finish_action(action, "failed", event.tick, "unknown_action_type")
   end
 end)
 
@@ -140,6 +205,34 @@ remote.add_interface("factorio_player_mcp", {
     return action_response(action, "accepted")
   end,
 
+  start_move = function(x, y)
+    local player, rejection = actor_or_rejection()
+    if player == nil then
+      return rejection
+    end
+    if type(x) ~= "number" or type(y) ~= "number" or math.abs(x) > 1000000 or math.abs(y) > 1000000 then
+      return response({status = "rejected", reason = "invalid_move_target", tick = game.tick})
+    end
+    if storage.active_action ~= nil then
+      return response({
+        status = "rejected",
+        reason = "action_in_progress",
+        action_id = storage.active_action.id,
+        tick = game.tick,
+      })
+    end
+
+    storage.next_action_id = (storage.next_action_id or 0) + 1
+    local action = {
+      id = storage.next_action_id,
+      action_type = "move",
+      requested_tick = game.tick,
+      target_position = {x = x, y = y},
+    }
+    storage.active_action = action
+    return action_response(action, "accepted")
+  end,
+
   action_status = function(action_id)
     if type(action_id) ~= "number" or action_id % 1 ~= 0 or action_id < 1 then
       return response({status = "rejected", reason = "invalid_action_id", tick = game.tick})
@@ -148,8 +241,8 @@ remote.add_interface("factorio_player_mcp", {
     if storage.active_action ~= nil and storage.active_action.id == action_id then
       return action_response(storage.active_action, "accepted")
     end
-    if storage.last_completed_action ~= nil and storage.last_completed_action.id == action_id then
-      return action_response(storage.last_completed_action, "completed")
+    if storage.last_finished_action ~= nil and storage.last_finished_action.id == action_id then
+      return action_response(storage.last_finished_action)
     end
     return response({status = "rejected", reason = "unknown_action", action_id = action_id, tick = game.tick})
   end,

@@ -18,6 +18,8 @@ class ActorOperations(Protocol):
 
     def wait(self, *, ticks: int) -> dict[str, object]: ...
 
+    def move(self, *, x: float, y: float) -> dict[str, object]: ...
+
 
 def create_server(service: ActorOperations) -> FastMCP:
     """Create the public MCP server with only the currently implemented tools."""
@@ -38,6 +40,11 @@ def create_server(service: ActorOperations) -> FastMCP:
     def wait(ticks: int) -> dict[str, object]:
         """Wait for a bounded number of normal Factorio game ticks."""
         return service.wait(ticks=ticks)
+
+    @mcp.tool
+    def move(x: float, y: float) -> dict[str, object]:
+        """Walk the dedicated player toward a target using normal movement state."""
+        return service.move(x=x, y=y)
 
     return mcp
 

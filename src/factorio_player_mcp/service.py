@@ -40,7 +40,13 @@ class ActorService:
         return self._invoke(self._commands.craft(recipe=recipe, count=count))
 
     def wait(self, *, ticks: int) -> dict[str, object]:
-        started = self._invoke(self._commands.start_wait(ticks=ticks))
+        return self._wait_for_action(self._commands.start_wait(ticks=ticks))
+
+    def move(self, *, x: float, y: float) -> dict[str, object]:
+        return self._wait_for_action(self._commands.start_move(x=x, y=y))
+
+    def _wait_for_action(self, start_command: str) -> dict[str, object]:
+        started = self._invoke(start_command)
         if started.get("status") != "accepted":
             return started
 

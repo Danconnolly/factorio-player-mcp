@@ -7,11 +7,13 @@ interface.
 
 from __future__ import annotations
 
+import math
 import re
 
 
 _RECIPE_NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 _MAX_WAIT_TICKS = 3_600
+_MAX_COORDINATE = 1_000_000
 
 
 class TypedCommandBuilder:
@@ -38,6 +40,17 @@ class TypedCommandBuilder:
         if not isinstance(action_id, int) or isinstance(action_id, bool) or action_id <= 0:
             raise ValueError("action_id must be a positive integer")
         return self._remote_call("action_status", str(action_id))
+
+    def start_move(self, *, x: float, y: float) -> str:
+        return self._remote_call("start_move", self._coordinate("x", x), self._coordinate("y", y))
+
+    @staticmethod
+    def _coordinate(name: str, value: float) -> str:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"{name} must be a finite coordinate")
+        if not math.isfinite(value) or abs(value) > _MAX_COORDINATE:
+            raise ValueError(f"{name} must be a finite coordinate within map bounds")
+        return format(value, "g")
 
     def _remote_call(self, method: str, *arguments: str) -> str:
         arguments_text = ", ".join(

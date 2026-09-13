@@ -33,7 +33,8 @@ versioned response schemas.
 
 ## Host MCP bootstrap
 
-The current stdio MCP server exposes only `observe_actor`, `craft`, and `wait`.
+The current stdio MCP server exposes only `observe_actor`, `craft`, `wait`, and
+`move`.
 requires the Factorio mod to be installed and the game to be running with RCON
 enabled. The RCON password belongs only in the host-side MCP process; do not
 provide it to an agent.
