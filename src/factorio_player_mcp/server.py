@@ -28,6 +28,10 @@ class ActorOperations(Protocol):
 
     def rotate(self, *, x: float, y: float, reverse: bool = False) -> dict[str, object]: ...
 
+    def interact_inventory(
+        self, *, x: float, y: float, item: str, count: int, operation: str, slot: str
+    ) -> dict[str, object]: ...
+
 
 def create_server(service: ActorOperations) -> FastMCP:
     """Create the public MCP server with only the currently implemented tools."""
@@ -73,6 +77,15 @@ def create_server(service: ActorOperations) -> FastMCP:
     def rotate(x: float, y: float, reverse: bool = False) -> dict[str, object]:
         """Rotate one reachable rotatable entity through the dedicated player's normal action."""
         return service.rotate(x=x, y=y, reverse=reverse)
+
+    @mcp.tool
+    def interact_inventory(
+        x: float, y: float, item: str, count: int, operation: str, slot: str
+    ) -> dict[str, object]:
+        """Transfer a bounded item count to or from one validated reachable inventory slot."""
+        return service.interact_inventory(
+            x=x, y=y, item=item, count=count, operation=operation, slot=slot
+        )
 
     return mcp
 

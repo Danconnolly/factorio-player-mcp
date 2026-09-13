@@ -33,6 +33,11 @@ class FakeActorService:
     def rotate(self, *, x: float, y: float, reverse: bool = False) -> dict[str, object]:
         return {"status": "completed", "x": x, "y": y, "reverse": reverse}
 
+    def interact_inventory(
+        self, *, x: float, y: float, item: str, count: int, operation: str, slot: str
+    ) -> dict[str, object]:
+        return {"status": "completed", "x": x, "y": y, "item": item, "count": count, "operation": operation, "slot": slot}
+
 
 class McpServerTests(unittest.TestCase):
     def test_server_exposes_only_observe_and_craft(self) -> None:
@@ -41,7 +46,7 @@ class McpServerTests(unittest.TestCase):
         tools = asyncio.run(server.get_tools())
 
         self.assertEqual(server.name, "Factorio Player MCP")
-        self.assertEqual(set(tools), {"observe_actor", "observe_local", "craft", "wait", "move", "mine", "place", "rotate"})
+        self.assertEqual(set(tools), {"observe_actor", "observe_local", "craft", "wait", "move", "mine", "place", "rotate", "interact_inventory"})
         self.assertNotIn("run_lua", tools)
         self.assertNotIn("execute", tools)
 

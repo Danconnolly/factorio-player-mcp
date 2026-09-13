@@ -57,6 +57,15 @@ class ActorService:
     def rotate(self, *, x: float, y: float, reverse: bool = False) -> dict[str, object]:
         return self._invoke(self._commands.rotate(x=x, y=y, reverse=reverse))
 
+    def interact_inventory(
+        self, *, x: float, y: float, item: str, count: int, operation: str, slot: str
+    ) -> dict[str, object]:
+        return self._invoke(
+            self._commands.interact_inventory(
+                x=x, y=y, item=item, count=count, operation=operation, slot=slot
+            )
+        )
+
     def _wait_for_action(self, start_command: str) -> dict[str, object]:
         started = self._invoke(start_command)
         if started.get("status") != "accepted":

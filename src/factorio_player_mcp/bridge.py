@@ -16,7 +16,10 @@ _MAX_WAIT_TICKS = 3_600
 _MAX_COORDINATE = 1_000_000
 _MAX_MINE_COUNT = 100
 _MAX_OBSERVATION_RADIUS = 20
+_MAX_INVENTORY_INTERACTION_COUNT = 100
 _DIRECTIONS = frozenset({"north", "northeast", "east", "southeast", "south", "southwest", "west", "northwest"})
+_INVENTORY_OPERATIONS = frozenset({"deposit", "withdraw"})
+_INVENTORY_SLOTS = frozenset({"container", "input", "fuel", "output"})
 
 
 class TypedCommandBuilder:
@@ -83,6 +86,27 @@ class TypedCommandBuilder:
             self._coordinate("x", x),
             self._coordinate("y", y),
             "true" if reverse else "false",
+        )
+
+    def interact_inventory(
+        self, *, x: float, y: float, item: str, count: int, operation: str, slot: str
+    ) -> str:
+        if not _RECIPE_NAME.fullmatch(item):
+            raise ValueError("item must be a lowercase Factorio prototype name")
+        if not isinstance(count, int) or isinstance(count, bool) or not 1 <= count <= _MAX_INVENTORY_INTERACTION_COUNT:
+            raise ValueError(f"count must be an integer between 1 and {_MAX_INVENTORY_INTERACTION_COUNT}")
+        if operation not in _INVENTORY_OPERATIONS:
+            raise ValueError("operation must be deposit or withdraw")
+        if slot not in _INVENTORY_SLOTS:
+            raise ValueError("slot must be container, input, fuel, or output")
+        return self._remote_call(
+            "interact_inventory",
+            self._coordinate("x", x),
+            self._coordinate("y", y),
+            f"'{item}'",
+            str(count),
+            f"'{operation}'",
+            f"'{slot}'",
         )
 
     @staticmethod

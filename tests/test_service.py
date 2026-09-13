@@ -143,6 +143,23 @@ class ActorServiceTests(unittest.TestCase):
             ["/silent-command rcon.print(remote.call('factorio_player_mcp', 'rotate', 3.5, -2, true))"],
         )
 
+    def test_interact_inventory_returns_the_mod_response(self) -> None:
+        sender = RecordingSender('{"status":"completed","transferred_count":2}')
+        service = ActorService(sender)
+
+        result = service.interact_inventory(
+            x=3.5, y=-2, item="coal", count=2, operation="deposit", slot="fuel"
+        )
+
+        self.assertEqual(result, {"status": "completed", "transferred_count": 2})
+        self.assertEqual(
+            sender.commands,
+            [
+                "/silent-command rcon.print(remote.call("
+                "'factorio_player_mcp', 'interact_inventory', 3.5, -2, 'coal', 2, 'deposit', 'fuel'))"
+            ],
+        )
+
     def test_invalid_craft_request_does_not_reach_the_sender(self) -> None:
         sender = RecordingSender()
         service = ActorService(sender)

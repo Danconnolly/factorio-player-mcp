@@ -36,7 +36,8 @@ Only these typed gameplay actions are permitted:
 - `place`: place an item from the player's cursor/inventory using normal build
   rules.
 - `rotate`: rotate a reachable rotatable entity through normal player rules.
-- `interact_inventory`: perform an ordinary, validated inventory interaction.
+- `interact_inventory`: transfer a bounded item count to or from one reachable,
+  compatible target inventory slot (`container`, `input`, `fuel`, or `output`).
 
 The bridge validates all preconditions in the game-side component: actor state,
 reach, target existence, collision, ownership where applicable, inventory,

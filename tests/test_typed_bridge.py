@@ -101,6 +101,19 @@ class TypedCommandBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "reverse"):
             self.builder.rotate(x=0, y=0, reverse=1)
 
+    def test_interact_inventory_uses_a_fixed_operation_and_slot(self) -> None:
+        self.assertEqual(
+            self.builder.interact_inventory(
+                x=3.5, y=-2, item="coal", count=2, operation="deposit", slot="fuel"
+            ),
+            "/silent-command rcon.print(remote.call("
+            "'factorio_player_mcp', 'interact_inventory', 3.5, -2, 'coal', 2, 'deposit', 'fuel'))",
+        )
+        with self.assertRaisesRegex(ValueError, "operation"):
+            self.builder.interact_inventory(x=0, y=0, item="coal", count=1, operation="delete", slot="fuel")
+        with self.assertRaisesRegex(ValueError, "slot"):
+            self.builder.interact_inventory(x=0, y=0, item="coal", count=1, operation="deposit", slot="all")
+
     def test_observe_local_uses_a_bounded_radius(self) -> None:
         self.assertEqual(
             self.builder.observe_local(radius=10),
@@ -130,6 +143,8 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertIn("start_mine = function(x, y, count)", control_lua)
         self.assertIn("place = function(item_name, x, y, direction_name)", control_lua)
         self.assertIn("rotate = function(x, y, reverse)", control_lua)
+        self.assertIn("interact_inventory = function(x, y, item_name, count, operation, slot_name)", control_lua)
+        self.assertIn("target_inventory_for", control_lua)
         self.assertIn("player.build_from_cursor", control_lua)
         self.assertIn("local before_count = inventory.get_item_count(item_name)", control_lua)
         self.assertIn("target.rotate({reverse = reverse, by_player = player.index})", control_lua)
@@ -152,7 +167,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.12")
+        self.assertEqual(mod_info["version"], "0.1.13")
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
         locale = LOCALE_PATH.read_text(encoding="utf-8")

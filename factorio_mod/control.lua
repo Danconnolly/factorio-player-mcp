@@ -66,6 +66,25 @@ local function direction_from_name(direction_name)
   return directions[direction_name]
 end
 
+local function target_inventory_for(entity, slot_name)
+  if (entity.type == "container" or entity.type == "logistic-container") and slot_name == "container" then
+    return entity.get_inventory(defines.inventory.chest)
+  end
+  if entity.type == "furnace" then
+    local furnace_slots = {
+      input = defines.inventory.furnace_source,
+      fuel = defines.inventory.furnace_fuel,
+      output = defines.inventory.furnace_result,
+    }
+    local inventory_index = furnace_slots[slot_name]
+    return inventory_index == nil and nil or entity.get_inventory(inventory_index)
+  end
+  if entity.type == "mining-drill" and slot_name == "fuel" then
+    return entity.get_inventory(defines.inventory.fuel)
+  end
+  return nil
+end
+
 local function local_entities(player, radius)
   local position = player.position
   local area = {{position.x - radius, position.y - radius}, {position.x + radius, position.y + radius}}
@@ -358,6 +377,75 @@ remote.add_interface("factorio_player_mcp", {
       item = item_name,
       position = position,
       direction = direction_name,
+    })
+  end,
+
+  interact_inventory = function(x, y, item_name, count, operation, slot_name)
+    local player, rejection = actor_or_rejection()
+    if player == nil then
+      return rejection
+    end
+    if type(x) ~= "number" or type(y) ~= "number" or type(item_name) ~= "string"
+        or type(count) ~= "number" or count % 1 ~= 0 or count < 1 or count > 100
+        or (operation ~= "deposit" and operation ~= "withdraw")
+        or (slot_name ~= "container" and slot_name ~= "input" and slot_name ~= "fuel" and slot_name ~= "output")
+        or math.abs(x) > 1000000 or math.abs(y) > 1000000 then
+      return response({status = "rejected", reason = "invalid_inventory_interaction", tick = game.tick})
+    end
+    if storage.active_action ~= nil then
+      return response({
+        status = "rejected",
+        reason = "action_in_progress",
+        action_id = storage.active_action.id,
+        tick = game.tick,
+      })
+    end
+    local position = {x = x, y = y}
+    if not is_charted_for_player(player, position) then
+      return response({status = "rejected", reason = "inventory_target_not_charted", tick = game.tick})
+    end
+
+    player.update_selected_entity(position)
+    local target = player.selected
+    if target == nil or not target.valid or target.force ~= player.force or not player.can_reach_entity(target) then
+      return response({status = "rejected", reason = "inventory_target_unavailable", tick = game.tick})
+    end
+    local target_inventory = target_inventory_for(target, slot_name)
+    if target_inventory == nil or not target_inventory.valid then
+      return response({status = "rejected", reason = "inventory_slot_unavailable", tick = game.tick})
+    end
+    if operation == "deposit" and slot_name == "output" then
+      return response({status = "rejected", reason = "inventory_slot_read_only", tick = game.tick})
+    end
+
+    local player_inventory = player.get_main_inventory()
+    local removed
+    local transferred
+    if operation == "deposit" then
+      removed = player_inventory.remove({name = item_name, count = count})
+      transferred = target_inventory.insert({name = item_name, count = removed})
+      if transferred < removed then
+        player_inventory.insert({name = item_name, count = removed - transferred})
+      end
+    else
+      removed = target_inventory.remove({name = item_name, count = count})
+      transferred = player_inventory.insert({name = item_name, count = removed})
+      if transferred < removed then
+        target_inventory.insert({name = item_name, count = removed - transferred})
+      end
+    end
+    if transferred == 0 then
+      return response({status = "rejected", reason = "inventory_item_unavailable_or_full", tick = game.tick})
+    end
+    return response({
+      status = "completed",
+      tick = game.tick,
+      operation = operation,
+      slot = slot_name,
+      item = item_name,
+      transferred_count = transferred,
+      target_name = target.name,
+      target_position = {x = target.position.x, y = target.position.y},
     })
   end,
 
