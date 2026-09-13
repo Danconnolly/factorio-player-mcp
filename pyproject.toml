@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "factorio-player-mcp"
+version = "0.1.2"
+description = "Constrained MCP control layer for one dedicated Factorio player"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+dependencies = [
+  "factorio-rcon-py>=1.2,<2",
+  "fastmcp>=2.0,<3",
+]
+
+[project.scripts]
+factorio-player-mcp = "factorio_player_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/factorio_player_mcp"]

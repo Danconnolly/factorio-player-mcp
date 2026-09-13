@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "factorio-player": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/absolute/path/to/factorio-player-mcp",
+        "run",
+        "factorio-player-mcp"
+      ],
+      "env": {
+        "FACTORIO_RCON_HOST": "127.0.0.1",
+        "FACTORIO_RCON_PORT": "25575",
+        "FACTORIO_RCON_PASSWORD": "replace-with-host-rcon-password"
+      }
+    }
+  }
+}
