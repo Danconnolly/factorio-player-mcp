@@ -180,6 +180,7 @@ local function advance_mine(action, event)
   end
 
   player.mining_state = {mining = true, position = target.position}
+  local progress = player.character_mining_progress
   if progress < 0.01 then
     action.no_progress_ticks = (action.no_progress_ticks or 0) + 1
   else

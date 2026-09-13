@@ -352,7 +352,7 @@ wheels = [
 
 [[package]]
 name = "factorio-player-mcp"
-version = "0.1.8"
+version = "0.1.9"
 source = { editable = "." }
 dependencies = [
     { name = "factorio-rcon-py" },

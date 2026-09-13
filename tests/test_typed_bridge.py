@@ -112,6 +112,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         self.assertIn("start_mine = function(x, y, count)", control_lua)
         self.assertIn("defines.events.on_player_mined_entity", control_lua)
         self.assertIn("action.mined_count", control_lua)
+        self.assertIn("local progress = player.character_mining_progress", control_lua)
         self.assertIn("observe_local = function(radius)", control_lua)
         self.assertIn("action_status = function(action_id)", control_lua)
         self.assertIn("player.walking_state", control_lua)
@@ -127,7 +128,7 @@ class TypedCommandBuilderTests(unittest.TestCase):
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.8")
+        self.assertEqual(mod_info["version"], "0.1.9")
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
         locale = LOCALE_PATH.read_text(encoding="utf-8")
