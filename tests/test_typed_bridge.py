@@ -11,6 +11,7 @@ from factorio_player_mcp.bridge import TypedCommandBuilder
 REPOSITORY_ROOT = Path(__file__).parents[1]
 CONTROL_LUA_PATH = REPOSITORY_ROOT / "factorio_mod" / "control.lua"
 MOD_INFO_PATH = REPOSITORY_ROOT / "factorio_mod" / "info.json"
+LOCALE_PATH = REPOSITORY_ROOT / "factorio_mod" / "locale" / "en" / "factorio-player-mcp.cfg"
 
 
 class TypedCommandBuilderTests(unittest.TestCase):
@@ -63,7 +64,14 @@ class TypedCommandBuilderTests(unittest.TestCase):
         mod_info = json.loads(MOD_INFO_PATH.read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.1")
+        self.assertEqual(mod_info["version"], "0.1.2")
+
+    def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
+        locale = LOCALE_PATH.read_text(encoding="utf-8")
+
+        self.assertIn("[mod-setting-name]", locale)
+        self.assertIn("factorio-player-mcp-actor-name=Dedicated player name", locale)
+        self.assertIn("[mod-setting-description]", locale)
 
 
 if __name__ == "__main__":
