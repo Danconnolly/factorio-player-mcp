@@ -340,13 +340,14 @@ remote.add_interface("factorio_player_mcp", {
       return response({status = "rejected", reason = "placement_item_unavailable", tick = game.tick})
     end
 
+    local before_count = inventory.get_item_count(item_name)
     player.cursor_stack.swap_stack(slot)
     local can_build = player.can_build_from_cursor({position = position, direction = direction})
-    local placed = false
     if can_build then
-      placed = player.build_from_cursor({position = position, direction = direction})
+      player.build_from_cursor({position = position, direction = direction})
     end
     player.cursor_stack.swap_stack(slot)
+    local placed = can_build and inventory.get_item_count(item_name) == before_count - 1
 
     if not placed then
       return response({status = "rejected", reason = "placement_not_allowed", tick = game.tick})
@@ -387,7 +388,7 @@ remote.add_interface("factorio_player_mcp", {
     if target == nil or not target.valid or not target.rotatable or not player.can_reach_entity(target) then
       return response({status = "rejected", reason = "rotate_target_unavailable", tick = game.tick})
     end
-    if not player.rotate_entity(target, reverse) then
+    if not target.rotate({reverse = reverse, by_player = true}) then
       return response({status = "rejected", reason = "rotation_not_allowed", tick = game.tick})
     end
     return response({
