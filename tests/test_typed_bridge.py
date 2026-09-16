@@ -184,8 +184,8 @@ class TypedCommandBuilderTests(unittest.TestCase):
         project = tomllib.loads((REPOSITORY_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
 
         self.assertEqual(mod_info["factorio_version"], "2.1")
-        self.assertEqual(mod_info["version"], "0.1.16")
-        self.assertEqual(project["project"]["version"], "0.1.16")
+        self.assertEqual(mod_info["version"], "0.1.17")
+        self.assertEqual(project["project"]["version"], "0.1.17")
         self.assertEqual(project["project"]["version"], mod_info["version"])
 
     def test_mod_setting_has_a_human_readable_locale_name(self) -> None:
